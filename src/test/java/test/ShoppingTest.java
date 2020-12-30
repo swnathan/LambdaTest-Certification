@@ -1,11 +1,5 @@
 package test;
 
-import java.awt.AWTException;
-import java.awt.Robot;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,35 +7,26 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Date;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.AfterClass;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
+import org.openqa.selenium.Platform;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.logging.LogEntries;
-import org.openqa.selenium.logging.LogEntry;
-import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.logging.Logs;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
 import helper.GlobalVariables;
 import net.serenitybdd.core.annotations.findby.By;
 import pageobjects.LoginPage;
@@ -54,36 +39,31 @@ public class ShoppingTest {
 	LogEntries logEntries;
 	String destinationFile = "";
 	String destinationFileName = "";
+	URL server;
 
 	@BeforeTest
 	public void beforeTest() throws MalformedURLException {
 
-		URL server;
 		server = new URL(GlobalVariables.remoteURL);
-		DesiredCapabilities capabilities = new DesiredCapabilities();
-		capabilities.setCapability("build", "build");
-		capabilities.setCapability("name", "test");
-		capabilities.setCapability("platform", "Windows 10");
-		capabilities.setCapability("browserName", "Chrome");
-		capabilities.setCapability("version", "86.0");
-		capabilities.setCapability("console", true);
-		capabilities.setCapability("network", true);
-		capabilities.setCapability("browserName", "Firefox");
-		capabilities.setCapability("version","84.0");
-		// System.setProperty("webdriver.chrome.driver", "driver/chromedriver.exe");
-		// driver = new ChromeDriver();
-		// logs = driver.manage().logs();
-		// logEntries = logs.get(LogType.BROWSER);
-		// List<LogEntry> logs= logs.getAll();
-		driver = new RemoteWebDriver(server, capabilities);
-		((RemoteWebDriver) driver).setFileDetector(new LocalFileDetector());
-		driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
-		driver.manage().window().maximize();
 	}
 
-	@Test(priority = 1)
-	public void testShopping() throws InterruptedException, IOException, AWTException {
+	@Test(dataProvider = "Environment")
+	public void testChrome(Platform platform, String browserName, String browserVersion)
+			throws InterruptedException, IOException {
 		try {
+
+			DesiredCapabilities capabilities = new DesiredCapabilities();
+			capabilities.setCapability("build", "build");
+			capabilities.setCapability("name", "test");
+			capabilities.setCapability("platform", platform);
+			capabilities.setCapability("browserName", browserName);
+			capabilities.setCapability("version", browserVersion);
+			capabilities.setCapability("console", true);
+			capabilities.setCapability("network", true);
+			driver = new RemoteWebDriver(server, capabilities);
+			((RemoteWebDriver) driver).setFileDetector(new LocalFileDetector());
+			driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+			driver.manage().window().maximize();
 			driver.get(GlobalVariables.applicationURL);
 			LoginPage loginpage = new LoginPage(driver);
 			loginpage.waitFor(loginpage.getUserName());
@@ -103,11 +83,19 @@ public class ShoppingTest {
 			mainPage.getDriver().switchTo().alert().accept();
 			mainPage.getFrequencyRadio("Every month").waitUntilVisible();
 			mainPage.getFrequencyRadio("Every month").click();
+			Actions actions = new Actions(driver);
+			actions.moveToElement(mainPage.getDecisiveFactors("customer-service"));
+			actions.clickAndHold();
+			actions.moveToElement(mainPage.getDecisiveFactors("customer-service"));
+			actions.release().perform();
+			actions.moveToElement(mainPage.getPaymentMode("Wallets"));
+			actions.clickAndHold();
+			actions.moveToElement(mainPage.getPaymentMode("Wallets"));
 			JavascriptExecutor js = (JavascriptExecutor) mainPage.getDriver();
-			js.executeScript("arguments[0].scrollIntoView();", mainPage.getDecisiveFactors("customer-service"));
-			js.executeScript("arguments[0].scrollIntoView();", mainPage.getPaymentMode("Wallets"));
+			js.executeScript("window.scrollBy(0,100)");
 			mainPage.getECommercePurchaseCheckbox().waitUntilVisible();
 			mainPage.getECommercePurchaseCheckbox().click();
+			js.executeScript("window.scrollBy(0,100)");
 			new Actions(driver).dragAndDropBy(mainPage.getSlider(), 500, 0).build().perform();
 			System.out.println(mainPage.getSlider().getAttribute("style"));
 			Assert.assertTrue(mainPage.getSlider().getAttribute("style").equalsIgnoreCase("left: 88.8889%;"),
@@ -185,6 +173,16 @@ public class ShoppingTest {
 		};
 		WebDriverWait wait = new WebDriverWait(driver, 60);
 		wait.until(javascriptDone);
+	}
+
+	@DataProvider(name = "Environment", parallel = true)
+	public Object[][] getData() {
+
+		Object[][] Browser_Property = new Object[][] {
+
+				{ Platform.WIN10, "chrome", "86.0" }, { Platform.HIGH_SIERRA, "Firefox", "84.0" } };
+		return Browser_Property;
+
 	}
 
 	@AfterTest
