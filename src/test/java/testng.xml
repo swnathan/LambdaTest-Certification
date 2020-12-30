@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<suite name="Suite" parallel="true">
+<suite name="Suite" parallel="false" thread-count = "2">
   <test name="Test">
     <classes>
       <class name="test.ShoppingTest"/>
       <methods>
-        <include name="testShopping"/>
+        <include name="testChrome"/>
       </methods>
     </classes>
   </test> <!-- Test -->

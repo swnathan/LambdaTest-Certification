@@ -175,12 +175,12 @@ public class ShoppingTest {
 		wait.until(javascriptDone);
 	}
 
-	@DataProvider(name = "Environment", parallel = true)
+	@DataProvider(name = "Environment", parallel = false)
 	public Object[][] getData() {
 
 		Object[][] Browser_Property = new Object[][] {
 
-				{ Platform.WIN10, "chrome", "86.0" }, { Platform.HIGH_SIERRA, "Firefox", "84.0" } };
+				{ Platform.WIN10, "chrome", "88.0" }, { Platform.HIGH_SIERRA, "Firefox", "84.0" } };
 		return Browser_Property;
 
 	}
